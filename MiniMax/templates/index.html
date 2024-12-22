@@ -70,7 +70,7 @@
             {% endfor %}
         </div>               
         <div class="message" id="message">
-            Player {{ current_player }}'s turn.
+            Player {{ player_turn }}'s turn.
         </div>
         <button id="restart">Restart</button>
     </div>
@@ -101,7 +101,7 @@
                             message.textContent = data.winner === 'Draw' ? "It's a draw!" : `Player ${data.winner} wins!`;
                             board.classList.add('disabled');
                         } else {
-                            message.textContent = `Player ${data.current_player}'s turn.`;
+                            message.textContent = `Player ${data.player_turn}'s turn.`;
                         }
                     }
                 });
