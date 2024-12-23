@@ -11,7 +11,10 @@ class NycharanXOGame:
         
     # turn this into calc_score function coz in 'NycharanXOGame' winner gets the more score than other player
     
-    def check_winner(self):
+    def calc_score(self):
+        pass
+    
+    def check_xo(self):
         for i in range(self.game_dim):
             if all(self.game_space[i][j] == self.game_space[i][0] for j in range(1,self.game_dim)) and self.game_space[i][0] != None:
                 return self.game_space[i][0]
