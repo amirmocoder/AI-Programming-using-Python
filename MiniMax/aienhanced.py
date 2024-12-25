@@ -1,10 +1,14 @@
 class NycharanXOGame:
-    def __init__(self):
-        self.game_dim = 3
+    def __init__(self, dim):
+        self.game_dim = dim
         self.game_space = [[" " for _ in range(self.game_dim)] for _ in range(self.game_dim)]
-        self.players= ["X", "O"]
+        self.players = ["X", "O"]
         self.player_turn = 0
-        self.players_score = {self.players[0] : 0, self.players[1] : 0}
+        self.players_score = {self.players[0]: 0, self.players[1]: 0}
+        self.minimax_depth = 4
+
+        # depth comments
+            # depth = 3 lost in dim = 6
 
     def show_game(self):
         for row in self.game_space:
@@ -13,52 +17,50 @@ class NycharanXOGame:
 
     def reset(self):
         self.game_space = [[" " for _ in range(self.game_dim)] for _ in range(self.game_dim)]
-        self.players_score = {self.players[0] : 0, self.players[1] : 0}
         self.player_turn = 0
 
     def switch_player(self):
         self.player_turn = 1 - self.player_turn
 
     def calc_score(self):
-        self.players_score = {self.players[0] : 0, self.players[1] : 0}
+        self.players_score = {self.players[0]: 0, self.players[1]: 0}
 
         def count_score(line):
             for player in self.players:
                 score = 0
                 counter = 0
 
-                for i in range(len(line) - 1):
-                    if line[i] == line[i + 1] == player:
+                for cell in line:
+                    if cell == player:
                         counter += 1
                     else:
                         if counter > 2:
                             score += (counter - 2) + (counter - 3)
-                            counter = 0
+                        counter = 0
+                if counter > 2:
+                    score += (counter - 2) + (counter - 3)
                 self.players_score[player] += score
 
         for i in range(self.game_dim):
             count_score(self.game_space[i])
             count_score([j[i] for j in self.game_space])
-
         for k in range(2*self.game_dim -1):
             count_score([self.game_space[i][j] for i in range(self.game_dim) if 0 <= (j := k - i) < self.game_dim])
             count_score([self.game_space[i][j] for i in range(self.game_dim) if 0 <= (j := i + k - self.game_dim + 1) < self.game_dim])
 
     def make_move(self, row, col):
-        def check_validation():
-            return 0 <= row < self.game_dim and 0 <= col < self.game_dim and self.game_space[row][col] == " "
-        if check_validation():
+        if 0 <= row < self.game_dim and 0 <= col < self.game_dim and self.game_space[row][col] == " ":
             self.game_space[row][col] = self.players[self.player_turn]
             self.calc_score()
             return True
-        return 'Invalid input Try again!'
+        print("Invalid input. Try again!")
+        return False
 
     def best_approach(self):
-        def minimax(maximize = True, alpha = float('-inf'), beta = float('inf'), depth = 6):
-            for row in self.game_space:
-                if " " not in row:
-                    return self.players_score[self.players[0]] - self.players_score[self.players[1]] 
-                
+        def minimax(maximize, alpha, beta, depth):
+            if " " not in [cell for row in self.game_space for cell in row] or depth == 0:
+                return self.players_score[self.players[1]] - self.players_score[self.players[0]]
+
             if maximize:
                 max_score = float('-inf')
                 for i in range(self.game_dim):
@@ -66,7 +68,7 @@ class NycharanXOGame:
                         if self.game_space[i][j] == " ":
                             self.game_space[i][j] = self.players[1]
                             self.calc_score()
-                            score = minimax(False, alpha, beta, depth + 1)
+                            score = minimax(False, alpha, beta, depth - 1)
                             self.game_space[i][j] = " "
                             self.calc_score()
                             max_score = max(max_score, score)
@@ -75,20 +77,20 @@ class NycharanXOGame:
                                 break
                 return max_score
             else:
-                max_score = float('inf')
+                min_score = float('inf')
                 for i in range(self.game_dim):
                     for j in range(self.game_dim):
                         if self.game_space[i][j] == " ":
                             self.game_space[i][j] = self.players[0]
                             self.calc_score()
-                            score = minimax(True, alpha, beta, depth + 1)
+                            score = minimax(True, alpha, beta, depth - 1)
                             self.game_space[i][j] = " "
                             self.calc_score()
-                            max_score = min(max_score, score)
+                            min_score = min(min_score, score)
                             beta = min(beta, score)
                             if beta <= alpha:
                                 break
-                return max_score
+                return min_score
 
         max_score = float('-inf')
         best_move = (-1, -1)
@@ -97,27 +99,31 @@ class NycharanXOGame:
                 if self.game_space[i][j] == " ":
                     self.game_space[i][j] = self.players[1]
                     self.calc_score()
-                    score = minimax(False, float('-inf'), float('inf'), 0)
+                    score = minimax(False, float('-inf'), float('inf'), self.minimax_depth)
                     self.game_space[i][j] = " "
                     self.calc_score()
                     if score > max_score:
                         max_score = score
                         best_move = (i, j)
         return best_move
-
+    
 # Game
 if __name__ == "__main__":
-    game = NycharanXOGame()
+    dim = int(input("Enter the game dimension (e.g., 3 for 3x3): "))
+    game = NycharanXOGame(dim)
 
     while True:
         game.show_game()
-        print(f"Scores: X = {game.players_score["X"]}, O = {game.players_score["O"]}")
+        print(f"Scores: X = {game.players_score['X']}, O = {game.players_score['O']}")
 
         if game.player_turn == 0:
             print("X's turn.")
-            row, col = map(int, input(f"Enter row and column (0-{game.game_dim - 1}, space-separated): ").split())
-            game.make_move(row, col)
-            game.switch_player()
+            try:
+                row, col = map(int, input(f"Enter row and column (0-{game.game_dim - 1}, space-separated): ").split())
+                if game.make_move(row, col):
+                    game.switch_player()
+            except ValueError:
+                print("Invalid input. Please enter two integers.")
         else:
             print("O's turn.")
             row, col = game.best_approach()
@@ -128,7 +134,7 @@ if __name__ == "__main__":
         if " " not in [cell for row in game.game_space for cell in row]:
             print("Game is over!")
             game.show_game()
-            print(f"Final Scores: X = {game.players_score["X"]}, O = {game.players_score["O"]}")
-            winner = "Tie" if game.players_score["X"] == game.players_score["O"] else "X" if game.players_score["X"] > game.players_score["O"] else "O"
+            print(f"Final Scores: X = {game.players_score['X']}, O = {game.players_score['O']}")
+            winner = "Tie" if game.players_score['X'] == game.players_score['O'] else "X" if game.players_score['X'] > game.players_score['O'] else "O"
             print(f"Winner is: {winner}")
             break
