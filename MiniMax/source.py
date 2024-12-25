@@ -8,23 +8,27 @@ class NycharanXOGame:
     def reset(self):
         self.game_space = [[None for _ in range(self.game_dim)] for _ in range(self.game_dim)]
         self.player_turn = 0
-        
-    # turn this into calc_score function coz in 'NycharanXOGame' winner gets the more score than other player
-    
-    def calc_score(self):
-        pass
-    
-    def check_xo(self):
-        for i in range(self.game_dim):
-            if all(self.game_space[i][j] == self.game_space[i][0] for j in range(1,self.game_dim)) and self.game_space[i][0] != None:
-                return self.game_space[i][0]
-            if all(self.game_space[j][i] == self.game_space[0][i] for j in range(1,self.game_dim)) and self.game_space[0][i] != None:
-                return self.game_space[0][i]
 
-        if all(self.game_space[j][j] == self.game_space[0][0] for j in range(1,self.game_dim)) and self.game_space[0][0] != None:
-            return self.game_space[0][0]
-        if all(self.game_space[j][i] if i+j == (self.game_dim - 1) else -1 == self.game_space[0][(self.game_dim - 1)] for j in range(1,self.game_dim)) and self.game_space[0][(self.game_dim - 1)] != None:
-            return self.game_space[0][(self.game_dim - 1)]
+    def fetch_game(self):
+        def calc_score(line):
+            for i in range(len(line) - 1):
+                score = 0
+                counter = 0
+
+                if line[i] == line[i + 1] == self.player_turn:
+                    counter += 1
+                else:
+                    if counter > 2:
+                        score += (counter - 2) + (counter - 3)
+            return score
+
+        for i in range(self.game_dim):
+            calc_score(self.game_space[i])
+            calc_score([j[i] for j in self.game_space])
+
+        for k in range(2*self.game_dim -1):
+            calc_score([self.game_space[i][j] for i in range(self.game_dim) if 0 <= (j := k - i) < self.game_dim])
+            calc_score([self.game_space[i][j] for i in range(self.game_dim) if 0 <= (j := i + k - self.game_dim + 1) < self.game_dim])
 
         for row in self.game_space:
             if None in row:
@@ -52,7 +56,7 @@ class NycharanXOGame:
                 return 0
 
             if maximize:
-                max_score = -1
+                max_score = float('-inf')
                 for i in range(self.game_dim):
                     for j in range(self.game_dim):
                         if game_space[i][j] == None:
@@ -62,7 +66,7 @@ class NycharanXOGame:
                             max_score = max(max_score, score)
                 return max_score
             else:
-                max_score = -1
+                max_score = float('-inf')
                 for i in range(self.game_dim):
                     for j in range(self.game_dim):
                         if game_space[i][j] == None:
@@ -72,7 +76,7 @@ class NycharanXOGame:
                             max_score = min(max_score, score)
                 return max_score
 
-        max_score = -1
+        max_score = float('-inf')
         max_move = (-1, -1)
         for i in range(self.game_dim):
             for j in range(self.game_dim):
